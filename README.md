@@ -18,7 +18,7 @@ Hi Makers! I'm HsiangYi from the [OFDL Robotics Lab](https://ofdl.tw/en/). We've
 - [x] API Reference page
 - [x] Advanced Topics page
 - [x] Publish to Arduino Library Manager
-- [ ] Publish to PlatformIO Library Registry
+- [x] Publish to PlatformIO Library Registry
 - [ ] Troubleshooting page
 - [ ] FAQ page
 
@@ -108,10 +108,9 @@ This guide uses a **SPIKE Hub with Pybricks** and an **ESP32-C3 SuperMini** as a
 
 #### For PlatformIO
 
-(TODO)
-
-<!-- 1. Open PlatformIO, go to `PlatformIO Home` > `Libraries` > `Registry`
-2. Search for `LUMP Device Builder` and install it. -->
+1. Go to `PlatformIO Home` > `Libraries` > `Registry`.
+2. Search for `LumpDeviceBuilder`.
+3. Click `Add to Project`.
 
 #### Manual Installation
 
