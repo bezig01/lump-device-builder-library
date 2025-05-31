@@ -40,8 +40,8 @@ void runDeviceModes() {
       break;
 
     case LumpDeviceState::Communicating: {
-      static int16_t data0       = 0;
-      static int16_t data1       = 0;
+      static int16_t positive    = 0;
+      static int16_t negative    = 0;
       static uint32_t period     = 5; // 200Hz
       static uint32_t prevMillis = 0;
       uint32_t currentMillis     = millis();
@@ -50,9 +50,9 @@ void runDeviceModes() {
       switch (mode) {
         case 0: {
           if (device.hasDataMsg(mode)) {
-            int16_t *msg = device.readDataMsg<int16_t>(mode);
-            data0        = msg[0];
-            data1        = msg[1];
+            int16_t *data = device.readDataMsg<int16_t>(mode);
+            positive = data[0];
+            negative = data[1];
           }
           break;
         }
@@ -65,7 +65,7 @@ void runDeviceModes() {
       if (device.hasNack() || (currentMillis - prevMillis > period)) {
         switch (mode) {
           case 0: {
-            int16_t data[] = {data0, data1};
+            int16_t data[] = {positive, negative};
             device.send(data, NUM_DATA);
             break;
           }
