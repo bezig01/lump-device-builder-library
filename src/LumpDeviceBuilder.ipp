@@ -20,8 +20,7 @@ namespace LumpDeviceBuilder {
       uint8_t numModes,
       uint8_t view,
       uint32_t fwVersion,
-      uint32_t hwVersion,
-      bool detectHostType
+      uint32_t hwVersion
   )
       : uart{uart},
         rxPin{rxPin},
@@ -31,8 +30,7 @@ namespace LumpDeviceBuilder {
         modes{modes},
         view{view},
         fwVersion{fwVersion},
-        hwVersion{hwVersion},
-        detectHostType{detectHostType} {
+        hwVersion{hwVersion} {
     this->numModes = min(numModes, static_cast<uint8_t>(LUMP_MAX_EXT_MODE + 1));
   }
 
@@ -114,21 +112,25 @@ namespace LumpDeviceBuilder {
          * - Enables RX to receive information from the host for automatic host type detection.
          *   Receipt of the `LUMP_CMD_SPEED` command indicates that the host type is LPF2.
          *
-         * Notes:
-         * - A simple approach is to initialize the UART first, then ground the TX pin.
-         *   Although some MCU libraries provide the option to enable UART RX only,
-         *   this approach is adopted to ensure broader compatibility.
-         * - Some MCUs, such as ATmega328/P, require register manipulation to ground the TX pin after UART initialization.
-         *   For such MCUs, automatic host type detection must be manually disabled (`detectHostType = false`)
-         *   for proper operation.
+         * Note:
+         *   To achieve this, the library follows a simple sequence:
+         *   1. Initializes the UART.
+         *   2. Grounds the TX pin.
+         *
+         *   However, this sequence may not work on all MCUs due to hardware differences.
+         *   For example, on the ATmega328/P, register manipulation is required to ground the TX pin after UART initialization.
+         *
+         *   Therefore, on such MCUs, the automatic host type detection feature must be manually disabled by defining the
+         *   `LUMP_HOST_DETECT_OFF` macro before including the library header to ensure proper operation.
          */
         LUMP_DEBUG_PRINTLN("[State] Init AutoID");
 
-        if (detectHostType) {
-          initUart(LUMP_UART_SPEED_LPF2);
-        } else {
-          uart->end();
-        }
+#ifdef LUMP_HOST_DETECT_OFF
+        uart->end();
+#else
+        initUart(LUMP_UART_SPEED_LPF2);
+#endif
+
         pinMode(txPin, OUTPUT);
         digitalWrite(txPin, LOW);
 

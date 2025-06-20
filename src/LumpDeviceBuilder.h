@@ -227,8 +227,6 @@ namespace LumpDeviceBuilder {
        * @param hwVersion Hardware version (default: `10000000`).
        *   Valid range: `[10000000..99999999]`.
        *   The value `10000000` represents v1.0.00.0000.
-       * @param detectHostType Whether to enable automatic host type detection (default: `true`).
-       *   Set to `false` if handshake consistently fails.
        */
       LumpDevice(
           T *uart,
@@ -238,10 +236,9 @@ namespace LumpDeviceBuilder {
           uint32_t speed,
           LumpMode *modes,
           uint8_t numModes,
-          uint8_t view        = LUMP_VIEW_ALL,
-          uint32_t fwVersion  = 10000000,
-          uint32_t hwVersion  = 10000000,
-          bool detectHostType = true
+          uint8_t view       = LUMP_VIEW_ALL,
+          uint32_t fwVersion = 10000000,
+          uint32_t hwVersion = 10000000
       );
 
       /**
@@ -552,7 +549,6 @@ namespace LumpDeviceBuilder {
       uint32_t hwVersion;
 
       /* Host info */
-      bool detectHostType;
       bool isLpf2Host;
 
       /* Device mode */
