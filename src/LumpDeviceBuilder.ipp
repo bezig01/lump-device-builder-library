@@ -192,7 +192,11 @@ namespace LumpDeviceBuilder {
 
           if (isLpf2Host) {
             LUMP_DEBUG_PRINTLN("[Info] Sends ACK to LPF2 host");
-            uartWrite(LUMP_SYS_ACK);
+
+            txBuffer[0] = LUMP_SYS_ACK;
+
+            LUMP_DEBUG_PRINT_TX_BUFFER(txBuffer, 1);
+            uartWrite(txBuffer, 1);
           }
 
           deviceState = LumpDeviceState::SendingType;
@@ -206,6 +210,8 @@ namespace LumpDeviceBuilder {
         txBuffer[0] = encMsgHeader(LUMP_MSG_TYPE_CMD, 1, LUMP_CMD_TYPE);
         txBuffer[1] = type;
         txBuffer[2] = calcChecksum(txBuffer, 2);
+
+        LUMP_DEBUG_PRINT_TX_BUFFER(txBuffer, 3);
         uartWrite(txBuffer, 3);
 
         deviceState = LumpDeviceState::SendingModes;
@@ -219,13 +225,13 @@ namespace LumpDeviceBuilder {
         uint8_t lpf2MaxMode = numModes - 1;
         uint8_t ev3MaxMode  = min(lpf2MaxMode, static_cast<uint8_t>(LUMP_MAX_MODE));
 
-        txBuffer[0] = encMsgHeader(LUMP_MSG_TYPE_CMD, 4, LUMP_CMD_MODES);
+        txBuffer[0] = encMsgHeader(LUMP_MSG_TYPE_CMD, 2, LUMP_CMD_MODES);
         txBuffer[1] = ev3MaxMode;
         txBuffer[2] = (maxView > ev3MaxMode) ? ev3MaxMode : maxView;
-        txBuffer[3] = lpf2MaxMode;
-        txBuffer[4] = (maxView > lpf2MaxMode) ? lpf2MaxMode : maxView;
-        txBuffer[5] = calcChecksum(txBuffer, 5);
-        uartWrite(txBuffer, 6);
+        txBuffer[3] = calcChecksum(txBuffer, 3);
+
+        LUMP_DEBUG_PRINT_TX_BUFFER(txBuffer, 4);
+        uartWrite(txBuffer, 4);
 
         deviceState = LumpDeviceState::SendingSpeed;
         break;
@@ -238,9 +244,13 @@ namespace LumpDeviceBuilder {
         txBuffer[0] = encMsgHeader(LUMP_MSG_TYPE_CMD, 4, LUMP_CMD_SPEED);
         memcpy(&txBuffer[1], &speed, 4);
         txBuffer[5] = calcChecksum(txBuffer, 5);
+
+        LUMP_DEBUG_PRINT_TX_BUFFER(txBuffer, 6);
         uartWrite(txBuffer, 6);
 
-        deviceState = LumpDeviceState::SendingVersion;
+        // Prepare to send mode information.
+        modeIdx     = numModes - 1; // Start from the last mode.
+        deviceState = LumpDeviceState::SendingName;
         break;
 
       case LumpDeviceState::SendingVersion: {
@@ -260,10 +270,10 @@ namespace LumpDeviceBuilder {
         memcpy(&txBuffer[1], &fwVersionBcd, 4);
         memcpy(&txBuffer[5], &hwVersionBcd, 4);
         txBuffer[9] = calcChecksum(txBuffer, 9);
+
+        LUMP_DEBUG_PRINT_TX_BUFFER(txBuffer, 10);
         uartWrite(txBuffer, 10);
 
-        // Prepare to send mode information.
-        modeIdx     = numModes - 1; // Start from the last mode.
         deviceState = LumpDeviceState::SendingName;
         break;
       }
@@ -294,6 +304,8 @@ namespace LumpDeviceBuilder {
         txBuffer[1] = LUMP_INFO_NAME | LUMP_INFO_MODE(modeIdx);
         memcpy(&txBuffer[2], modes[modeIdx].name, nameLen);
         txBuffer[msgSize + 2] = calcChecksum(txBuffer, msgSize + 2);
+
+        LUMP_DEBUG_PRINT_TX_BUFFER(txBuffer, msgSize + 3);
         uartWrite(txBuffer, msgSize + 3);
 
         deviceState = LumpDeviceState::SendingValueSpans;
@@ -324,10 +336,12 @@ namespace LumpDeviceBuilder {
           txBuffer[1] = LUMP_INFO_UNITS | LUMP_INFO_MODE(modeIdx);
           memcpy(&txBuffer[2], modes[modeIdx].symbol, symbolLen);
           txBuffer[msgSize + 2] = calcChecksum(txBuffer, msgSize + 2);
+
+          LUMP_DEBUG_PRINT_TX_BUFFER(txBuffer, msgSize + 3);
           uartWrite(txBuffer, msgSize + 3);
         }
 
-        deviceState = LumpDeviceState::SendingMapping;
+        deviceState = LumpDeviceState::SendingFormat;
         break;
       }
 
@@ -347,6 +361,8 @@ namespace LumpDeviceBuilder {
         txBuffer[2] = modes[modeIdx].mapIn;
         txBuffer[3] = modes[modeIdx].mapOut; // see note 1
         txBuffer[4] = calcChecksum(txBuffer, 4);
+
+        LUMP_DEBUG_PRINT_TX_BUFFER(txBuffer, 5);
         uartWrite(txBuffer, 5);
 
         deviceState = LumpDeviceState::SendingFormat;
@@ -371,6 +387,8 @@ namespace LumpDeviceBuilder {
         txBuffer[4] = modes[modeIdx].figures;
         txBuffer[5] = modes[modeIdx].decimals;
         txBuffer[6] = calcChecksum(txBuffer, 6);
+
+        LUMP_DEBUG_PRINT_TX_BUFFER(txBuffer, 7);
         uartWrite(txBuffer, 7);
 
         feedWdt();
@@ -400,7 +418,11 @@ namespace LumpDeviceBuilder {
         LUMP_DEBUG_PRINTLN("[State] Sending ACK");
 
         uart->flush(); // FIXME: Ensure non-blocking behavior.
-        uartWrite(LUMP_SYS_ACK);
+
+        txBuffer[0] = LUMP_SYS_ACK;
+
+        LUMP_DEBUG_PRINT_TX_BUFFER(txBuffer, 1);
+        uartWrite(txBuffer, 1);
 
         prevMillis  = millis();
         deviceState = LumpDeviceState::WaitingAckReply;
@@ -475,7 +497,10 @@ namespace LumpDeviceBuilder {
          */
         LUMP_DEBUG_PRINTLN("[State] Sending NACK");
 
-        uartWrite(LUMP_SYS_NACK);
+        txBuffer[0] = LUMP_SYS_NACK;
+
+        LUMP_DEBUG_PRINT_TX_BUFFER(txBuffer, 1);
+        uartWrite(txBuffer, 1);
 
         deviceState = prevDeviceState;
         break;
@@ -691,6 +716,8 @@ namespace LumpDeviceBuilder {
       memcpy(&txBuffer[2], &(valueSpan.min), 4);
       memcpy(&txBuffer[6], &(valueSpan.max), 4);
       txBuffer[10] = calcChecksum(txBuffer, 10);
+
+      LUMP_DEBUG_PRINT_TX_BUFFER(txBuffer, 11);
       uartWrite(txBuffer, 11);
     }
   }
@@ -751,6 +778,8 @@ namespace LumpDeviceBuilder {
       txBuffer[0] = encMsgHeader(LUMP_MSG_TYPE_CMD, 1, LUMP_CMD_EXT_MODE);
       txBuffer[1] = (mode > LUMP_MAX_MODE) ? LUMP_EXT_MODE_8 : LUMP_EXT_MODE_0;
       txBuffer[2] = calcChecksum(txBuffer, 2);
+
+      LUMP_DEBUG_PRINT_TX_BUFFER(txBuffer, 3);
       uartWrite(txBuffer, 3);
     }
 
@@ -758,6 +787,8 @@ namespace LumpDeviceBuilder {
     txBuffer[0]     = encMsgHeader(LUMP_MSG_TYPE_DATA, msgSize, mode % (LUMP_MAX_MODE + 1));
     memcpy(&txBuffer[1], payload, len);
     txBuffer[msgSize + 1] = calcChecksum(txBuffer, msgSize + 1);
+
+    LUMP_DEBUG_PRINT_TX_BUFFER(txBuffer, msgSize + 2);
     uartWrite(txBuffer, msgSize + 2);
   }
 

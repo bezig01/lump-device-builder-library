@@ -24,9 +24,18 @@
   #define LUMP_DEBUG_PRINT_RX_BUFFER(buffer, size) \
     LUMP_DEBUG_PRINT("[RX] ");                     \
     for (uint8_t i = 0; i < size; ++i) {           \
+      LUMP_DEBUG_PRINT(buffer[i] < 16 ? "0" : ""); \
       LUMP_DEBUG_PRINT(buffer[i], HEX);            \
       LUMP_DEBUG_PRINT(" ");                       \
     }
+  #define LUMP_DEBUG_PRINT_TX_BUFFER(buffer, size) \
+    LUMP_DEBUG_PRINT("[TX] ");                     \
+    for (uint8_t i = 0; i < size; ++i) {           \
+      LUMP_DEBUG_PRINT(buffer[i] < 16 ? "0" : ""); \
+      LUMP_DEBUG_PRINT(buffer[i], HEX);            \
+      LUMP_DEBUG_PRINT(" ");                       \
+    }                                              \
+    LUMP_DEBUG_PRINTLN("");
 #else
   #define LUMP_DEBUG_BEGIN(...)           ((void)0)
   #define LUMP_DEBUG_END(...)             ((void)0)
@@ -34,6 +43,7 @@
   #define LUMP_DEBUG_PRINT(...)           ((void)0)
   #define LUMP_DEBUG_PRINTLN(...)         ((void)0)
   #define LUMP_DEBUG_PRINT_RX_BUFFER(...) ((void)0)
+  #define LUMP_DEBUG_PRINT_TX_BUFFER(...) ((void)0)
 #endif
 
 #endif // LUMP_DEVICE_BUILDER_DEBUG_H
